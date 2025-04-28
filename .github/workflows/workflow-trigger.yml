@@ -1,0 +1,103 @@
+##Copyright © Amazon.com and Affiliates: This deliverable is considered Developed Content as defined in the AWS Service Terms and the SOW between the parties dated [date].
+
+name: Create payload.json and PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      RequestParameters:
+        description: 'Request Parameters JSON'
+        required: true
+      ResourceParameters:
+        description: 'Resource Parameters JSON'
+        required: true
+
+jobs:
+  create-file-and-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up environment and create parameter files
+        env:
+            REQUEST_PARAMETERS: ${{ github.event.inputs.RequestParameters }}
+            RESOURCE_PARAMETERS: ${{ github.event.inputs.ResourceParameters }}
+        run: |
+          # Parse RequestParameters
+          REQUEST_PARAMS="$REQUEST_PARAMETERS"
+          RESOURCE_PARAMS="$RESOURCE_PARAMETERS"
+          
+          REQUEST_ID=$(echo "$REQUEST_PARAMS" | jq -r '.RequestId')
+          REQUEST_TYPE=$(echo "$REQUEST_PARAMS" | jq -r '.RequestType')
+          RESOURCE_TYPE=$(echo "$REQUEST_PARAMS" | jq -r '.ResourceType')
+          ACCOUNT_ID=$(echo "$REQUEST_PARAMS" | jq -r '.AccountId')
+          ACCOUNT_ALIAS=$(echo "$REQUEST_PARAMS" | jq -r '.AccountAlias')
+          REGION_ID=$(echo "$REQUEST_PARAMS" | jq -r '.RegionId')
+          APPLICATION_NAME=$(echo "$REQUEST_PARAMS" | jq -r '.ApplicationName')
+          DIVISION_NAME=$(echo "$REQUEST_PARAMS" | jq -r '.DivisionName')
+          ENVIRONMENT_ID=$(echo "$REQUEST_PARAMS" | jq -r '.EnvironmentId')
+          SUFFIX=$(echo "$REQUEST_PARAMS" | jq -r '.Suffix')
+          
+          DIR_PATH="${RESOURCE_TYPE}/${ACCOUNT_ALIAS}/${REGION_ID}/${APPLICATION_NAME}_${DIVISION_NAME}_${RESOURCE_TYPE}_${SUFFIX}"
+          mkdir -p "$DIR_PATH"
+          
+          # Create payload.json
+          jq -n \
+            --arg RequestId "$REQUEST_ID" \
+            --arg RequestType "$REQUEST_TYPE" \
+            --arg ResourceType "$RESOURCE_TYPE" \
+            --arg AccountId "$ACCOUNT_ID" \
+            --arg AccountAlias "$ACCOUNT_ALIAS" \
+            --arg RegionId "$REGION_ID" \
+            --arg ApplicationName "$APPLICATION_NAME" \
+            --arg DivisionName "$DIVISION_NAME" \
+            --arg EnvironmentId "$ENVIRONMENT_ID" \
+            --arg Suffix "$SUFFIX" \
+            --argjson Parameters "$RESOURCE_PARAMS" \
+            '{
+              RequestId: $RequestId,
+              RequestType: $RequestType,
+              ResourceType: $ResourceType,
+              AccountId: $AccountId,
+              AccountAlias: $AccountAlias,
+              RegionId: $RegionId,
+              ApplicationName: $ApplicationName,
+              DivisionName: $DivisionName,
+              EnvironmentId: $EnvironmentId,
+              Suffix: $Suffix,
+              Parameters: $Parameters
+            }' > "$DIR_PATH/payload.json"
+          
+          echo "RESOURCE_NAME=${APPLICATION_NAME}_${DIVISION_NAME}_${RESOURCE_TYPE}_${SUFFIX}" >> $GITHUB_ENV
+          echo "DIR_PATH=$DIR_PATH" >> $GITHUB_ENV
+
+      - name: Set up Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      - name: Create new branch from main
+        run: |
+          git checkout main
+          git pull origin main
+          BRANCH_NAME="service-now-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b $BRANCH_NAME
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_CREATION_TOKEN }}
+        run: |
+          git add .
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Create payload.json for ${{ env.RESOURCE_NAME }}"
+            git push origin ${{ env.BRANCH_NAME }}
+            PR_URL=$(gh pr create --title "Create payload.json for ${{ env.RESOURCE_NAME }}" --body "This PR creates the payload.json file with the provided inputs in the specified directory structure." --base main --head ${{ env.BRANCH_NAME }})
+            echo "Pull request created: $PR_URL"
+          else
+            echo "No changes to commit"
+          fi
