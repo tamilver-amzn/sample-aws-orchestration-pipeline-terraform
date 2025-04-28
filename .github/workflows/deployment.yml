@@ -1,0 +1,192 @@
+##Copyright © Amazon.com and Affiliates: This deliverable is considered Developed Content as defined in the AWS Service Terms and the SOW between the parties dated [date].
+
+name: Infrastructure Deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/payload.json'
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      relative_path: ${{ steps.get_path.outputs.relative_path }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install Terraform
+      run: |
+        # Define Terraform version
+        TERRAFORM_VERSION="1.5.7"
+        
+        # Download Terraform
+        wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+        
+        # Unzip the downloaded file
+        unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+        
+        # Move terraform binary to a directory in PATH
+        sudo mv terraform /usr/local/bin/
+        
+        # Verify installation
+        terraform version
+        
+        # Clean up
+        rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
+    - name: Set up Terragrunt
+      run: |
+        sudo wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.31.0/terragrunt_linux_amd64 -O /usr/local/bin/terragrunt
+        sudo chmod +x /usr/local/bin/terragrunt
+
+    - name: Get changed files
+      id: changed-files
+      run: |
+        if [ "${{ github.event.pull_request.base.sha }}" ]; then
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep "payload.json$" || true)
+        else
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep "payload.json$" || true)
+        fi
+        echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Get relative path
+      id: get_path
+      run: |
+        FIRST_PAYLOAD=$(echo "${{ steps.changed-files.outputs.changed_files }}" | head -n 1)
+        if [ ! -z "$FIRST_PAYLOAD" ]; then
+          RELATIVE_PATH=$(dirname $FIRST_PAYLOAD)
+          echo "relative_path=$RELATIVE_PATH" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Read payload information
+      id: read_payload
+      run: |
+        CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
+        if [ -z "$CHANGED_FILES" ]; then
+          echo "No payload.json files changed in this PR"
+          exit 1
+        fi
+
+        # Use the first changed payload.json
+        FIRST_PAYLOAD=$(echo "$CHANGED_FILES" | head -n 1)
+        echo "Processing payload file: $FIRST_PAYLOAD"
+        
+        REGION=$(jq -r '.RegionId // .region // .Region // ""' "$FIRST_PAYLOAD")
+        REQUEST_TYPE=$(jq -r '.RequestType // ""' "$FIRST_PAYLOAD")
+        
+        if [ -z "$REGION" ]; then
+          echo "Region not found in payload.json"
+          exit 1
+        fi
+        
+        echo "Region: $REGION"
+        echo "Request Type: $REQUEST_TYPE"
+        
+        echo "region=$REGION" >> $GITHUB_OUTPUT
+        echo "request_type=$REQUEST_TYPE" >> $GITHUB_OUTPUT
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ vars.aws_role }}
+        aws-region: ${{ steps.read_payload.outputs.region }}
+
+    - name: Deploy or Destroy with Terragrunt
+      run: |
+        ROOT_DIR=$GITHUB_WORKSPACE
+        CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
+        
+        while IFS= read -r payload; do
+          if [ -z "$payload" ]; then
+            continue
+          fi
+          
+          echo "Processing payload file: $payload"
+          
+          relative_path=$(dirname $payload | sed "s|$ROOT_DIR/||")
+          echo "Relative path: $relative_path"
+          
+          export TF_VAR_payload=$(cat $payload)
+
+          echo $PWD
+          echo $ROOT_DIR/$relative_path
+          
+          if [ "${{ steps.read_payload.outputs.request_type }}" == "delete" ]; then
+            echo "Executing destroy operation..."
+            terragrunt run-all destroy \
+              --terragrunt-non-interactive
+          else
+            echo "Executing apply operation..."
+            terragrunt run-all apply \
+              --terragrunt-non-interactive
+            terragrunt run-all output -json > $GITHUB_WORKSPACE/output.json
+          fi
+        done <<< "$CHANGED_FILES"
+
+    - name: Upload output artifact
+      if: steps.read_payload.outputs.request_type != 'delete'
+      uses: actions/upload-artifact@v4
+      with:
+        name: terragrunt-output
+        path: output.json
+
+    - name: Merge original PR
+      if: github.event_name == 'pull_request'
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git fetch origin main
+        git checkout main
+        git merge ${{ github.event.pull_request.head.sha }} --no-ff -m "Merge PR #${{ github.event.pull_request.number }}"
+        git push origin main
+
+  create_output_pr:
+    needs: deploy
+    if: needs.deploy.outputs.relative_path != ''
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout main
+      uses: actions/checkout@v2
+      with:
+        ref: main
+        fetch-depth: 0 
+
+    - name: Download output artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: terragrunt-output
+        path: ${{ needs.deploy.outputs.relative_path }}
+
+    - name: Create and merge output PR
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        
+        git checkout -b terragrunt-output
+        git add ${{ needs.deploy.outputs.relative_path }}/output.json
+        git commit -m "Add Terragrunt output"
+        git push origin terragrunt-output
+        
+        gh pr create \
+          --title "Add Terragrunt output" \
+          --body "This PR adds the Terragrunt output from the recent deployment.\nPath: ${{ needs.deploy.outputs.relative_path }}" \
+          --base main \
+          --head terragrunt-output
+        
+        PR_NUMBER=$(gh pr list --base main --head terragrunt-output --json number --jq '.[0].number')
+        gh pr merge $PR_NUMBER --merge
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
