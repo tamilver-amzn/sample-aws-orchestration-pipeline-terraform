@@ -1,7 +1,0 @@
-{
-  "ref": "main",
-  "inputs": {
-    "RequestParameters": "{\"RequestId\":\"1111111\",\"RequestType\":\"create\",\"ResourceType\":\"vpc\",\"AccountId\":\"1234567890\",\"AccountAlias\":\"account-alias\",\"RegionId\":\"us-west-2\",\"ApplicationName\":\"myapp\",\"DivisionName\":\"division-name\",\"EnvironmentId\":\"dev\",\"Suffix\":\"poc27\"}",
-    "ResourceParameters": "[{\"VPC\":{\"vpc_cidr\":\"10.0.0.0/16\"}}]"
-  }
-}

@@ -42,6 +42,15 @@ jobs:
           ENVIRONMENT_ID=$(echo "$REQUEST_PARAMS" | jq -r '.EnvironmentId')
           SUFFIX=$(echo "$REQUEST_PARAMS" | jq -r '.Suffix')
           
+          # Convert resource type to lowercase for directory matching
+          RESOURCE_TYPE_DIR=$(echo "$RESOURCE_TYPE" | tr '[:upper:]' '[:lower:]')
+          
+          # Validate that the resource type has a corresponding directory
+          if [ ! -d "$RESOURCE_TYPE_DIR" ]; then
+            echo "Error: No directory found for resource type '$RESOURCE_TYPE'"
+            exit 1
+          fi
+          
           DIR_PATH="${RESOURCE_TYPE}/${ACCOUNT_ALIAS}/${REGION_ID}/${APPLICATION_NAME}_${DIVISION_NAME}_${RESOURCE_TYPE}_${SUFFIX}"
           mkdir -p "$DIR_PATH"
           
@@ -90,7 +99,7 @@ jobs:
 
       - name: Commit and push changes
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_CREATION_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git add .
           if [ -n "$(git status --porcelain)" ]; then
