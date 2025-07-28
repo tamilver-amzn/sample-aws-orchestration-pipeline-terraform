@@ -22,11 +22,10 @@ This specific repository contains example code that shows how to create AWS VPC 
 ### Environment Configuration
 
 1. Required github variables.
-   - aws_role - AWS role with appropriate permissions to deploy resources
-   - AWS_REGION - Region to connect aws account
+   - aws_role - AWS role arn with appropriate permissions to deploy resources
 
 2. Required GitHub Secrets:
-   - `REPO_CREATION_TOKEN`: GitHub token with permissions perform github operations
+   - `PAT_TOKEN`: GitHub personal access token with permissions to perform github operations
 
 ### Best Practices
 
