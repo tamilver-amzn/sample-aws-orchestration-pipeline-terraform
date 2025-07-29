@@ -29,7 +29,9 @@ This specific repository contains example code that shows how to create AWS VPC 
 
 ### Best Practices
 
-1. Github actions role should have the permission to deploy the resources. Least-privilege IAM policy for GitHub Actions to deploy VPC resources - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+1. Create an IAM role with the trust relationships necessary for the GitHub actions to connect to actions in AWS using OpenID Connect (OIDC) identity provider (IdP). - https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
+
+2. Github actions role should have the permission to deploy the resources. Least-privilege IAM policy for GitHub Actions to deploy the resources - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
 
 sample policy for VPC:
 
@@ -48,12 +50,30 @@ sample policy for VPC:
                 "ec2:DescribeVpcs"
             ],
             "Resource": "arn:aws:ec2:*:*:vpc/*"
-        }
+        },
+        {
+			"Sid": "BackendPermissions",
+			"Effect": "Allow",
+			"Action": [
+				"s3:PutEncryptionConfiguration",
+				"s3:PutBucketPublicAccessBlock",
+				"s3:PutBucketTagging",
+				"s3:PutBucketPolicy",
+				"s3:CreateBucket",
+				"s3:DeleteBucket",
+				"s3:PutBucketVersioning",
+                "dynamodb:CreateTable"
+			],
+			"Resource": [
+				"arn:aws:s3:::*",
+				"arn:aws:dynamodb:*:*:table/*"
+			]
+		}
     ]
 }
 ```
 
-2. GitHub Runner:
+3. GitHub Runner:
 
     https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners
     https://aws.amazon.com/blogs/devops/best-practices-working-with-self-hosted-github-action-runners-at-scale-on-aws/
@@ -72,8 +92,9 @@ IAC-Repository/
 ├── .github/
 │   ├── deployment.yml        # Main deployment workflow
 │   └── workflow-trigger.yml  # Workflow for creating and processing payloads
-└── sample-payload/
-    └── payload.json         # Example payload structure
+└── sample-payload/           # Example payload structure
+    ├── s3-payload.json
+    └── vpc-payload.json
 ```
 
 ## Workflows
