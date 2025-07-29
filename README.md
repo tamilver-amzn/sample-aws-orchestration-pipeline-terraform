@@ -52,23 +52,23 @@ sample policy for VPC:
             "Resource": "arn:aws:ec2:*:*:vpc/*"
         },
         {
-			"Sid": "BackendPermissions",
-			"Effect": "Allow",
-			"Action": [
-				"s3:PutEncryptionConfiguration",
-				"s3:PutBucketPublicAccessBlock",
-				"s3:PutBucketTagging",
-				"s3:PutBucketPolicy",
-				"s3:CreateBucket",
-				"s3:DeleteBucket",
-				"s3:PutBucketVersioning",
+            "Sid": "BackendPermissions",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutEncryptionConfiguration",
+                "s3:PutBucketPublicAccessBlock",
+                "s3:PutBucketTagging",
+                "s3:PutBucketPolicy",
+                "s3:CreateBucket",
+                "s3:DeleteBucket",
+                "s3:PutBucketVersioning",
                 "dynamodb:CreateTable"
-			],
-			"Resource": [
-				"arn:aws:s3:::*",
-				"arn:aws:dynamodb:*:*:table/*"
-			]
-		}
+            ],
+            "Resource": [
+                "arn:aws:s3:::*",
+                "arn:aws:dynamodb:*:*:table/*"
+            ]
+        }
     ]
 }
 ```
