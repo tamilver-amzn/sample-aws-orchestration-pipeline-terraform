@@ -16,8 +16,7 @@ This specific repository contains example code that shows how to create AWS VPC 
 ### Prerequisites
 
 - AWS account with access to Amazon VPC
-- GitHub repository with pull request workflow
-- Appropriate IAM roles and permissions configured
+- Git installed and configured in a local workspace.
 
 ### Environment Configuration
 
