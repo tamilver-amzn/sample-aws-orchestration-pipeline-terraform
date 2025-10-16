@@ -1,0 +1,27 @@
+{
+  "RequestId": "1111111",
+  "RequestType": "create",
+  "ResourceType": "ec2",
+  "AccountId": "748324069878",
+  "AccountAlias": "account-alias",
+  "RegionId": "us-west-2",
+  "ApplicationName": "myapp",
+  "DivisionName": "division-name",
+  "EnvironmentId": "dev",
+  "Suffix": "poc",
+  "Parameters": [
+    {
+      "EC2": {
+        "name": "test-instance",
+        "instance_type": "t3.micro",
+        "key_name": "testoct16",
+        "monitoring": true,
+        "subnet_id": "subnet-054837888a1faab42",
+        "tags": {
+          "Terraform": "true",
+          "Environment": "dev"
+        }
+      }
+    }
+  ]
+}
