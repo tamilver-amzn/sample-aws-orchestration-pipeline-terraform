@@ -6,12 +6,12 @@ terraform {
 
 locals {
   payload = jsondecode(get_env("TF_VAR_payload", "{}"))
-  s3_config = try(local.payload.Parameters[0].S3, {})
+  ec2_config = try(local.payload.Parameters[0].EC2, {})
 
   # Backend configuration
   aws_region = try(local.payload.RegionId, "us-east-1")
   state_bucket_name = "${local.payload.ApplicationName}-${local.payload.EnvironmentId}-tfstate"
-  state_key = "s3/terraform.tfstate"
+  state_key = "ec2/terraform.tfstate"
   lock_table_name = "${local.payload.ApplicationName}-${local.payload.EnvironmentId}-tfstate-lock"
 }
 
@@ -61,19 +61,22 @@ EOF
 }
 
 inputs = {
-  bucket = "${local.payload.ApplicationName}-${local.payload.EnvironmentId}-${local.payload.Suffix}"
+  name = try(local.ec2_config.name, "${local.payload.ApplicationName}-${local.payload.EnvironmentId}")
   
-  # S3 bucket configuration
-  block_public_acls       = try(local.s3_config.block_public_acls, true)
-  block_public_policy     = try(local.s3_config.block_public_policy, true)
-  ignore_public_acls      = try(local.s3_config.ignore_public_acls, true)
-  restrict_public_buckets = try(local.s3_config.restrict_public_buckets, true)
+  # EC2 instance configuration
+  instance_type = try(local.ec2_config.instance_type, "t3.micro")
+  key_name      = try(local.ec2_config.key_name, null)
+  monitoring    = try(local.ec2_config.monitoring, false)
+  subnet_id     = try(local.ec2_config.subnet_id, null)
 
-  tags = {
-    Environment = local.payload.EnvironmentId
-    Application = local.payload.ApplicationName
-    Division    = local.payload.DivisionName
-    AccountId   = local.payload.AccountId
-    AccountAlias = local.payload.AccountAlias
-  }
+  tags = merge(
+    {
+      Environment = local.payload.EnvironmentId
+      Application = local.payload.ApplicationName
+      Division    = local.payload.DivisionName
+      AccountId   = local.payload.AccountId
+      AccountAlias = local.payload.AccountAlias
+    },
+    try(local.ec2_config.tags, {})
+  )
 }
