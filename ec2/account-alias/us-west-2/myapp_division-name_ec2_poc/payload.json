@@ -2,7 +2,7 @@
   "RequestId": "1111111",
   "RequestType": "create",
   "ResourceType": "ec2",
-  "AccountId": "748324069878",
+  "AccountId": "704019167919",
   "AccountAlias": "account-alias",
   "RegionId": "us-west-2",
   "ApplicationName": "myapp",
@@ -14,9 +14,9 @@
       "EC2": {
         "name": "test-instance",
         "instance_type": "t3.micro",
-        "key_name": "testoct16",
+        "key_name": "naveen",
         "monitoring": true,
-        "subnet_id": "subnet-054837888a1faab42",
+        "subnet_id": "subnet-06c14419c6a9274a6",
         "tags": {
           "Terraform": "true",
           "Environment": "dev"
