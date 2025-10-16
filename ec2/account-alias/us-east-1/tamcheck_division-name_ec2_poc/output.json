@@ -1,0 +1,220 @@
+{
+  "ami": {
+    "sensitive": false,
+    "type": "string",
+    "value": "ami-0341d95f75f311023"
+  },
+  "arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": "arn:aws:ec2:us-east-1:704019167919:instance/i-0150c168ec2cd2625"
+  },
+  "availability_zone": {
+    "sensitive": false,
+    "type": "string",
+    "value": "us-east-1f"
+  },
+  "capacity_reservation_specification": {
+    "sensitive": false,
+    "type": [
+      "list",
+      [
+        "object",
+        {
+          "capacity_reservation_preference": "string",
+          "capacity_reservation_target": [
+            "list",
+            [
+              "object",
+              {
+                "capacity_reservation_id": "string",
+                "capacity_reservation_resource_group_arn": "string"
+              }
+            ]
+          ]
+        }
+      ]
+    ],
+    "value": [
+      {
+        "capacity_reservation_preference": "open",
+        "capacity_reservation_target": []
+      }
+    ]
+  },
+  "ebs_block_device": {
+    "sensitive": false,
+    "type": [
+      "set",
+      [
+        "object",
+        {
+          "delete_on_termination": "bool",
+          "device_name": "string",
+          "encrypted": "bool",
+          "iops": "number",
+          "kms_key_id": "string",
+          "snapshot_id": "string",
+          "tags": [
+            "map",
+            "string"
+          ],
+          "tags_all": [
+            "map",
+            "string"
+          ],
+          "throughput": "number",
+          "volume_id": "string",
+          "volume_size": "number",
+          "volume_type": "string"
+        }
+      ]
+    ],
+    "value": []
+  },
+  "ebs_volumes": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {}
+    ],
+    "value": {}
+  },
+  "ephemeral_block_device": {
+    "sensitive": false,
+    "type": [
+      "set",
+      [
+        "object",
+        {
+          "device_name": "string",
+          "no_device": "bool",
+          "virtual_name": "string"
+        }
+      ]
+    ],
+    "value": []
+  },
+  "id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "i-0150c168ec2cd2625"
+  },
+  "instance_state": {
+    "sensitive": false,
+    "type": "string",
+    "value": "running"
+  },
+  "ipv6_addresses": {
+    "sensitive": false,
+    "type": [
+      "list",
+      "string"
+    ],
+    "value": []
+  },
+  "outpost_arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": ""
+  },
+  "password_data": {
+    "sensitive": false,
+    "type": "string",
+    "value": ""
+  },
+  "primary_network_interface_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "eni-0d1c755bb0aa5c54e"
+  },
+  "private_dns": {
+    "sensitive": false,
+    "type": "string",
+    "value": "ip-172-31-72-126.ec2.internal"
+  },
+  "private_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "172.31.72.126"
+  },
+  "public_dns": {
+    "sensitive": false,
+    "type": "string",
+    "value": "ec2-3-238-28-15.compute-1.amazonaws.com"
+  },
+  "public_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "3.238.28.15"
+  },
+  "root_block_device": {
+    "sensitive": false,
+    "type": [
+      "list",
+      [
+        "object",
+        {
+          "delete_on_termination": "bool",
+          "device_name": "string",
+          "encrypted": "bool",
+          "iops": "number",
+          "kms_key_id": "string",
+          "tags": [
+            "map",
+            "string"
+          ],
+          "tags_all": [
+            "map",
+            "string"
+          ],
+          "throughput": "number",
+          "volume_id": "string",
+          "volume_size": "number",
+          "volume_type": "string"
+        }
+      ]
+    ],
+    "value": [
+      {
+        "delete_on_termination": true,
+        "device_name": "/dev/xvda",
+        "encrypted": false,
+        "iops": 3000,
+        "kms_key_id": "",
+        "tags": {},
+        "tags_all": {},
+        "throughput": 125,
+        "volume_id": "vol-09f59df258b3514bc",
+        "volume_size": 8,
+        "volume_type": "gp3"
+      }
+    ]
+  },
+  "security_group_arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": "arn:aws:ec2:us-east-1:704019167919:security-group/sg-0f67781dad4f49ca8"
+  },
+  "security_group_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "sg-0f67781dad4f49ca8"
+  },
+  "tags_all": {
+    "sensitive": false,
+    "type": [
+      "map",
+      "string"
+    ],
+    "value": {
+      "AccountAlias": "account-alias",
+      "AccountId": "704019167919",
+      "Application": "tamcheck",
+      "Division": "division-name",
+      "Environment": "dev",
+      "Name": "test-instance",
+      "Terraform": "true"
+    }
+  }
+}
