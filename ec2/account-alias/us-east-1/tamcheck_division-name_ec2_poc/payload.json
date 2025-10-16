@@ -1,0 +1,27 @@
+{
+  "RequestId": "1111111",
+  "RequestType": "create",
+  "ResourceType": "ec2",
+  "AccountId": "704019167919",
+  "AccountAlias": "account-alias",
+  "RegionId": "us-east-1",
+  "ApplicationName": "tamcheck",
+  "DivisionName": "division-name",
+  "EnvironmentId": "dev",
+  "Suffix": "poc",
+  "Parameters": [
+    {
+      "EC2": {
+        "name": "test-instance",
+        "instance_type": "t3.micro",
+        "key_name": "naveen",
+        "monitoring": true,
+        "subnet_id": "subnet-06c14419c6a9274a6",
+        "tags": {
+          "Terraform": "true",
+          "Environment": "dev"
+        }
+      }
+    }
+  ]
+}
